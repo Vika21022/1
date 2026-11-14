@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Home — Device Dashboard</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #1f2933;
+            --muted: #6b7280;
+            --accent: #2563eb;
+            --ok: #16a34a;
+            --bad: #dc2626;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .container { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+
+        header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+        h1 { font-size: 1.5rem; margin: 0; }
+        .updated { color: var(--muted); font-size: 0.85rem; }
+
+        .summary {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+            margin-bottom: 24px;
+        }
+
+        .summary .number { font-size: 2.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
+        .summary .label { color: var(--muted); font-size: 0.9rem; }
+
+        .devices { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+        .device {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 18px 20px;
+            box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+        }
+
+        .device .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .device h2 { font-size: 1.05rem; margin: 0; }
+
+        .badge { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; }
+        .badge.online { background: #dcfce7; color: var(--ok); }
+        .badge.offline { background: #fee2e2; color: var(--bad); }
+
+        .metric { display: flex; justify-content: space-between; font-size: 0.92rem; padding: 4px 0; }
+        .metric .k { color: var(--muted); }
+        .metric .v { font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Smart Home — Device Dashboard</h1>
+            <span class="updated" id="updated"></span>
+        </header>
+
+        <div class="summary">
+            <div>
+                <div class="number" id="online-count">–</div>
+                <div class="label">devices online</div>
+            </div>
+            <div>
+                <div class="number" id="total-count">–</div>
+                <div class="label">devices total</div>
+            </div>
+        </div>
+
+        <div class="devices" id="devices"></div>
+    </div>
+
+    <script>
+        function formatUptime(seconds) {
+            if (seconds === null || seconds === undefined) return "–";
+            const d = Math.floor(seconds / 86400);
+            const h = Math.floor((seconds % 86400) / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            const pad = n => String(n).padStart(2, "0");
+            return (d > 0 ? d + "d " : "") + pad(h) + ":" + pad(m) + ":" + pad(s);
+        }
+
+        function render(data) {
+            document.getElementById("online-count").textContent = data.onlineCount;
+            document.getElementById("total-count").textContent = data.totalCount;
+            document.getElementById("updated").textContent = "Updated " + new Date().toLocaleTimeString();
+
+            const container = document.getElementById("devices");
+            container.innerHTML = "";
+
+            for (const d of data.devices) {
+                const card = document.createElement("div");
+                card.className = "device";
+                card.innerHTML = `
+                    <div class="top">
+                        <h2>${d.name}</h2>
+                        <span class="badge ${d.online ? "online" : "offline"}">${d.online ? "Online" : "Offline"}</span>
+                    </div>
+                    <div class="metric"><span class="k">Address</span><span class="v">${d.address}</span></div>
+                    <div class="metric"><span class="k">Uptime</span><span class="v">${d.online ? formatUptime(d.uptimeSeconds) : "–"}</span></div>
+                    <div class="metric"><span class="k">Temperature</span><span class="v">${d.online ? d.temperature.toFixed(1) + " °C" : "–"}</span></div>
+                    <div class="metric"><span class="k">Last seen</span><span class="v">${d.lastOnline ? new Date(d.lastOnline).toLocaleTimeString() : "never"}</span></div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        async function refresh() {
+            try {
+                const response = await fetch("/api/devices");
+                if (!response.ok) return;
+                render(await response.json());
+            } catch (e) {
+                console.error("Failed to refresh", e);
+            }
+        }
+
+        refresh();
+        setInterval(refresh, 5000);
+    </script>
+</body>
+</html>

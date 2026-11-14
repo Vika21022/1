@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net11.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+
+		<PublishAot>false</PublishAot>
+		<PublishSingleFile>false</PublishSingleFile>
+		<SelfContained>false</SelfContained>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="DeviceDashboard/**" />
+		<None Remove="DeviceDashboard/**" />
+		<Content Remove="DeviceDashboard/**" />
+		<EmbeddedResource Remove="DeviceDashboard/**" />
+	</ItemGroup>
+
+</Project>

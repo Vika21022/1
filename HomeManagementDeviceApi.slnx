@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="HomeManagementDeviceApi.csproj" />
+  <Project Path="DeviceDashboard/DeviceDashboard.csproj" />
+</Solution>
